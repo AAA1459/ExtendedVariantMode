@@ -10,21 +10,6 @@ namespace ExtendedVariants.UI {
         private static readonly MethodInfo ouiModOptionsAddSearchBox = typeof(OuiModOptions).GetMethod("AddSearchBox", BindingFlags.Public | BindingFlags.Static);
         private static readonly FieldInfo overworldInputEaseField = typeof(Overworld).GetField("inputEase", BindingFlags.NonPublic | BindingFlags.Instance);
 
-        public static void Load() {
-            if (ouiModOptionsAddSearchBox != null && overworldInputEaseField != null) {
-                On.Celeste.Overworld.ctor += onOverworldConstruct;
-            }
-        }
-
-        public static void Unload() {
-            On.Celeste.Overworld.ctor -= onOverworldConstruct;
-        }
-
-        private static void onOverworldConstruct(On.Celeste.Overworld.orig_ctor orig, Overworld self, OverworldLoader loader) {
-            orig(self, loader);
-            Instance = new InputSearchUI(self);
-        }
-
         public static InputSearchUI Instance { get; private set; }
 
         private static VirtualButton key => Input.QuickRestart;
@@ -68,18 +53,27 @@ namespace ExtendedVariants.UI {
             ButtonUI.Render(position, label, key, scale, 1f, wiggler.Value * 0.05f);
         }
 
-        public void RegisterMenuEvents(TextMenu menu, bool showSearchUI) {
-            this.showSearchUI = showSearchUI;
-            if (!showSearchUI) return;
+        public static void RegisterMenuEvents(TextMenu menu, bool showSearchUI) {
+            if (Instance == null) {
+                if (ouiModOptionsAddSearchBox == null || overworldInputEaseField == null)
+                    return;
+                Instance = new(null);
+            }
+            Instance.showSearchUI = showSearchUI;
+            if (!showSearchUI)
+                return;
+            Overworld overworld = Engine.Scene as Overworld;
 
             // make sure the button is part of the current scene (Level or Overworld)
-            if (Scene != Engine.Scene) Engine.Scene.Add(this);
-
-            Action startSearching = ouiModOptionsAddSearchBox.Invoke(null, new object[] { menu, null }) as Action;
+            if (Instance.Scene != Engine.Scene) {
+                Instance.overworld = overworld;
+                Engine.Scene.Add(Instance);
+            }
+            Action startSearching = ouiModOptionsAddSearchBox.Invoke(null, new object[] { menu, overworld }) as Action;
             // Remove Celeste.TextMenuExt+SearchToolTip added in the previous line
             menu.Remove(menu.Items[menu.Items.Count - 1]);
 
-            menu.OnClose += () => this.showSearchUI = false;
+            menu.OnClose += () => Instance.showSearchUI = false;
             menu.OnUpdate += () => {
                 if (key.Pressed) startSearching.Invoke();
             };

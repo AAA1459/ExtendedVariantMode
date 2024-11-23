@@ -791,7 +791,7 @@ namespace ExtendedVariants.UI {
                 menu.Add(randomizerOptions = AbstractSubmenu.BuildOpenMenuButton<OuiRandomizerOptions>(menu, inGame, submenuBackAction, new object[0]));
             }
 
-            InputSearchUI.Instance?.RegisterMenuEvents(menu, showSearchUI: category != VariantCategory.None);
+            InputSearchUI.RegisterMenuEvents(menu, showSearchUI: category != VariantCategory.None);
             refreshOptionMenuEnabledStatus();
         }
 
