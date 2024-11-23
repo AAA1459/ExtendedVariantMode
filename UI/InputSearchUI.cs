@@ -54,8 +54,11 @@ namespace ExtendedVariants.UI {
         }
 
         public static void RegisterMenuEvents(TextMenu menu, bool showSearchUI) {
-            if (Instance == null)
+            if (Instance == null) {
+                if (ouiModOptionsAddSearchBox == null || overworldInputEaseField == null)
+                    return;
                 Instance = new(null);
+            }
             Instance.showSearchUI = showSearchUI;
             if (!showSearchUI)
                 return;
